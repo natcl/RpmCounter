@@ -45,7 +45,6 @@ public:
     countCallback = fptr;
   }
 
-
 protected:
   // Timers
   elapsedMillis rpm_cycle_timer;
