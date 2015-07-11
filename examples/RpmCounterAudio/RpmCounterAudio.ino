@@ -27,10 +27,20 @@ AudioControlSGTL5000     sgtl5000_1;
 #define SDCARD_MOSI_PIN  7
 #define SDCARD_SCK_PIN   14
 
+// LEDS
 const byte ledPin1 = 13;
 const byte ledPin2 = 14;
-const byte sensorPin1 = 2;
-const byte sensorPin2 = 3;
+// Sensors
+const byte sensorPin1 = 5;
+const byte sensorPin2 = 6;
+// Sync
+const byte syncPin = 3; 
+const byte playPin =  4;
+bool play = 0;
+
+const char *tounes[] = {"toune1.wav", "toune2.wav", "toune3.wav", "toune4.wav"};
+int nbTounes = sizeof(tounes)/sizeof(tounes[0]);
+int currentSong = 0;
 
 void setup()
 {
@@ -43,9 +53,16 @@ void setup()
 	rpmCounter1.begin(sensorPin1, 4, 400, 4, 10);
 	rpmCounter2.begin(sensorPin2, 4, 400, 4, 10);
 
-  // LED
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, HIGH);
+	// LED
+	pinMode(ledPin1, OUTPUT);
+	pinMode(ledPin2, OUTPUT);
+	digitalWrite(ledPin1, HIGH);
+	digitalWrite(ledPin2, HIGH);
+
+	// Sync and play
+	pinMode(syncPin, OUTPUT);
+	pinMode(playPin, INPUT);
+	attachInterrupt(playPin, playTrigger, RISING);
 
 	AudioMemory(8);
 
@@ -55,44 +72,65 @@ void setup()
 	SPI.setMOSI(SDCARD_MOSI_PIN);
 	SPI.setSCK(SDCARD_SCK_PIN);
 	if (!(SD.begin(SDCARD_CS_PIN))) {
-	  // stop here, but print a message repetitively
-	  while (1) {
-	    Serial.println("Unable to access the SD card");
-	    delay(500);
-	  }
+		// stop here, but print a message repetitively
+		while (1) {
+			Serial.println("Unable to access the SD card");
+			delay(500);
+		}
 	}
 	dc1.amplitude(1.);
 	dc2.amplitude(1.);
+
+	// Start playback
+	digitalWrite(syncPin, HIGH);
 }
 
 void loop()
 {
-	playFile("stereo.wav");
+	if (play)
+		playFile(tounes[currentSong]);
 }
 
 void playFile(const char *filename)
 {
-  Serial.print("Playing file: ");
-  Serial.println(filename);
+	digitalWrite(syncPin, LOW);
+	play = 0;
+	
+	Serial.print("Playing file: ");
+	Serial.println(filename);
 
-  // Start playing the file.  This sketch continues to
-  // run while the file plays.
-  playWav1.play(filename);
+	// Start playing the file.  This sketch continues to
+	// run while the file plays.
+	playWav1.play(filename);
 
-  // A brief delay for the library read WAV info
-  delay(5);
+	// A brief delay for the library read WAV info
+	delay(5);
 
-  // Simply wait for the file to finish playing.
-  while (playWav1.isPlaying()) {
-  	rpmCounter1.update();
-	  rpmCounter2.update();
-    updateLed();
-    // uncomment these lines if you audio shield
-    // has the optional volume pot soldered
-    float vol = analogRead(15);
-    vol = vol / 1024;
-    sgtl5000_1.volume(vol);
-  }
+	// Simply wait for the file to finish playing.
+	while (playWav1.isPlaying()) {
+		rpmCounter1.update();
+		rpmCounter2.update();
+		updateLed1();
+		updateLed2();
+		// uncomment these lines if you audio shield
+		// has the optional volume pot soldered
+		float vol = analogRead(15);
+		vol = vol / 1024;
+		sgtl5000_1.volume(vol);
+	}
+
+	// Increment next song
+	currentSong++;
+	if (currentSong >= nbTounes)
+		currentSong = 0;
+
+	// Set play flag to true for next song
+	digitalWrite(syncPin, HIGH);
+}
+
+void playTrigger()
+{		
+	play = 1;
 }
 
 void onRpm1(float val)
@@ -110,7 +148,7 @@ void onRpm2(float val)
 	Serial.print("Sensor 2: ");
 	//Serial.println(val);
 	float vol = map(val, 0, 300, 0, 100) / 100.;
-	//Serial.println(val);
+	Serial.println(val);
 	dc2.amplitude(vol);
 }
 
@@ -126,25 +164,17 @@ void onCounter2()
 
 void updateLed1()
 {
-  if (digitalRead(sensorPin1) == HIGH) 
-  {
-    digitalWrite(ledPin1, HIGH);
-  } 
-  else 
-  {
-    digitalWrite(ledPin1, LOW);
-  }
+	if (digitalRead(sensorPin1) == HIGH) 
+		digitalWrite(ledPin1, HIGH);
+	else 
+		digitalWrite(ledPin1, LOW);
 }
 
 void updateLed2()
 {
-  if (digitalRead(sensorPin2) == HIGH) 
-  {
-    digitalWrite(ledPin2, HIGH);
-  } 
-  else 
-  {
-    digitalWrite(ledPin2, LOW);
-  }
+	if (digitalRead(sensorPin2) == HIGH) 
+		digitalWrite(ledPin2, HIGH);
+	else 
+		digitalWrite(ledPin2, LOW);
 }
 
