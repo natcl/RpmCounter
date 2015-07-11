@@ -32,13 +32,13 @@ const byte ledPin1 = 13;
 const byte ledPin2 = 14;
 // Sensors
 const byte sensorPin1 = 5;
-const byte sensorPin2 = 6;
+const byte sensorPin2 = 8;
 // Sync
 const byte syncPin = 3; 
 const byte playPin =  4;
 bool play = 0;
 
-const char *tounes[] = {"toune1.wav", "toune2.wav", "toune3.wav", "toune4.wav"};
+const char *tounes[] = {"toune1.wav", "toune2.wav"};
 int nbTounes = sizeof(tounes)/sizeof(tounes[0]);
 int currentSong = 0;
 
@@ -81,12 +81,14 @@ void setup()
 	dc1.amplitude(1.);
 	dc2.amplitude(1.);
 
+	delay(1000);
 	// Start playback
 	digitalWrite(syncPin, HIGH);
 }
 
 void loop()
 {
+	//delay(1000);
 	if (play)
 		playFile(tounes[currentSong]);
 }
@@ -137,7 +139,7 @@ void onRpm1(float val)
 {
 	Serial.print("Sensor 1: ");
 	//Serial.println(val);
-	float vol = map(val, 0, 300, 0, 100) / 100.;
+	float vol = map(val, 0, 100, 0, 100) / 100.;
 	Serial.println(val);
 	dc1.amplitude(vol);
 
@@ -147,7 +149,7 @@ void onRpm2(float val)
 {
 	Serial.print("Sensor 2: ");
 	//Serial.println(val);
-	float vol = map(val, 0, 300, 0, 100) / 100.;
+	float vol = map(val, 0, 100, 0, 100) / 100.;
 	Serial.println(val);
 	dc2.amplitude(vol);
 }
