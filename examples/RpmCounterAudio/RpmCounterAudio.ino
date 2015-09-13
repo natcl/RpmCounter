@@ -30,6 +30,8 @@ AudioControlSGTL5000     sgtl5000_1;
 // LEDS
 const byte ledPin1 = 13;
 const byte ledPin2 = 14;
+const byte stripPin1 = 20;
+const byte stripPin2 = 21;
 // Sensors
 const byte sensorPin1 = 5;
 const byte sensorPin2 = 8;
@@ -38,7 +40,7 @@ const byte syncPin = 3;
 const byte playPin =  4;
 bool play = 0;
 
-const char *tounes[] = {"toune1.wav", "toune2.wav"};
+const char *tounes[] = {"toune1.wav", "toune2.wav", "toune3.wav", "toune4.wav", "toune5.wav", "toune6.wav", "toune7.wav", "toune8.wav", "toune9.wav", "toune10.wav", "toune11.wav", "toune12.wav", "toune13.wav", "toune14.wav", "toune15.wav", "toune16.wav"};
 int nbTounes = sizeof(tounes)/sizeof(tounes[0]);
 int currentSong = 0;
 
@@ -56,15 +58,19 @@ void setup()
 	// LED
 	pinMode(ledPin1, OUTPUT);
 	pinMode(ledPin2, OUTPUT);
+	pinMode(stripPin1, OUTPUT);
+	pinMode(stripPin2, OUTPUT);
 	digitalWrite(ledPin1, HIGH);
 	digitalWrite(ledPin2, HIGH);
+	analogWrite(stripPin1, 0);
+	analogWrite(stripPin2, 0);
 
 	// Sync and play
 	pinMode(syncPin, OUTPUT);
 	pinMode(playPin, INPUT);
 	attachInterrupt(playPin, playTrigger, RISING);
 
-	AudioMemory(8);
+	AudioMemory(16);
 
 	sgtl5000_1.enable();
 	sgtl5000_1.volume(0.5);
@@ -138,20 +144,24 @@ void playTrigger()
 void onRpm1(float val)
 {
 	Serial.print("Sensor 1: ");
-	//Serial.println(val);
-	float vol = map(val, 0, 100, 0, 100) / 100.;
+	
+	float vol = map(val, 0, 70, 0, 100) / 100.;
+	byte bri = map(val, 0, 70, 0, 255);
+ Serial.println(vol);
 	Serial.println(val);
 	dc1.amplitude(vol);
-
+	analogWrite(stripPin1, bri);
 }
 
 void onRpm2(float val)
 {
 	Serial.print("Sensor 2: ");
 	//Serial.println(val);
-	float vol = map(val, 0, 100, 0, 100) / 100.;
+	float vol = map(val, 0, 70, 0, 100) / 100.;
+	byte bri = map(val, 0, 70, 0, 255);
 	Serial.println(val);
 	dc2.amplitude(vol);
+	analogWrite(stripPin2, bri);
 }
 
 void onCounter1()
